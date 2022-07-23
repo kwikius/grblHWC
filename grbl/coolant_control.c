@@ -23,15 +23,22 @@
 
 void coolant_init()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   COOLANT_FLOOD_DDR |= (1 << COOLANT_FLOOD_BIT); // Configure as output pin.
   COOLANT_MIST_DDR |= (1 << COOLANT_MIST_BIT); // Configure as output pin.
   coolant_stop();
+#endif
 }
 
 
 // Returns current coolant output state. Overrides may alter it from programmed state.
 uint8_t coolant_get_state()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return COOLANT_STATE_DISABLE;
+#else
   uint8_t cl_state = COOLANT_STATE_DISABLE;
   #ifdef INVERT_COOLANT_FLOOD_PIN
     if (bit_isfalse(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
@@ -48,6 +55,7 @@ uint8_t coolant_get_state()
     cl_state |= COOLANT_STATE_MIST;
   }
   return(cl_state);
+#endif
 }
 
 
@@ -55,6 +63,9 @@ uint8_t coolant_get_state()
 // an interrupt-level. No report flag set, but only called by routines that don't need it.
 void coolant_stop()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   #ifdef INVERT_COOLANT_FLOOD_PIN
     COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
   #else
@@ -65,23 +76,27 @@ void coolant_stop()
   #else
     COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
   #endif
+#endif
 }
 
 
-// Main program only. Immediately sets flood coolant running state and also mist coolant, 
+// Main program only. Immediately sets flood coolant running state and also mist coolant,
 // if enabled. Also sets a flag to report an update to a coolant state.
 // Called by coolant toggle override, parking restore, parking retract, sleep mode, g-code
 // parser program end, and g-code parser coolant_sync().
 void coolant_set_state(uint8_t mode)
 {
-  if (sys.abort) { return; } // Block during abort.  
-  
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
+  if (sys.abort) { return; } // Block during abort.
+
   if (mode == COOLANT_DISABLE) {
-  
-    coolant_stop(); 
-  
+
+    coolant_stop();
+
   } else {
-  
+
     if (mode & COOLANT_FLOOD_ENABLE) {
       #ifdef INVERT_COOLANT_FLOOD_PIN
         COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
@@ -89,7 +104,7 @@ void coolant_set_state(uint8_t mode)
         COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
       #endif
     }
-  
+
     if (mode & COOLANT_MIST_ENABLE) {
       #ifdef INVERT_COOLANT_MIST_PIN
         COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
@@ -97,17 +112,22 @@ void coolant_set_state(uint8_t mode)
         COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
       #endif
     }
-  
+
   }
   sys.report_ovr_counter = 0; // Set to report change immediately
+#endif
 }
 
 
-// G-code parser entry-point for setting coolant state. Forces a planner buffer sync and bails 
+// G-code parser entry-point for setting coolant state. Forces a planner buffer sync and bails
 // if an abort or check-mode is active.
 void coolant_sync(uint8_t mode)
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   if (sys.state == STATE_CHECK_MODE) { return; }
   protocol_buffer_synchronize(); // Ensure coolant turns on when specified in program.
   coolant_set_state(mode);
+#endif
 }

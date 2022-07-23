@@ -58,7 +58,7 @@
 // NOTE: This data is copied from the prepped planner blocks so that the planner blocks may be
 // discarded when entirely consumed and completed by the segment buffer. Also, AMASS alters this
 // data for its own use.
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   typedef struct {
   uint32_t steps[N_AXIS];
   uint32_t step_event_count;
@@ -114,7 +114,7 @@ typedef struct {
            counter_z;
   #endif
   #ifdef STEP_PULSE_DELAY
-    #ifdef DEFAULTS_RAMPS_BOARD
+    #if defined(MULTIPORT_STEPPER_PINS)
       uint8_t step_bits[N_AXIS];  // Stores out_bits output to complete the step pulse delay
     #else
       uint8_t step_bits;  // Stores out_bits output to complete the step pulse delay
@@ -123,7 +123,7 @@ typedef struct {
 
   uint8_t execute_step;     // Flags step execution for each interrupt.
   uint8_t step_pulse_time;  // Step pulse reset time after step rise
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     uint8_t step_outbits[N_AXIS];         // The next stepping-bits to be output
     uint8_t dir_outbits[N_AXIS];
   #else
@@ -147,7 +147,7 @@ static uint8_t segment_buffer_head;
 static uint8_t segment_next_head;
 
 // Step and direction port invert masks.
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   static uint8_t step_port_invert_mask[N_AXIS];
   static uint8_t dir_port_invert_mask[N_AXIS];
 #else
@@ -238,18 +238,18 @@ static st_prep_t prep;
 // Stepper state initialization. Cycle should only start if the st.cycle_start flag is
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
 
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   int idx;
 #endif // Ramps Board
 
 void st_wake_up()
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     int idx;
   #endif // Ramps Board
 
   // Enable stepper drivers.
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) {
       STEPPER_DISABLE_PORT(0) |= (1 << STEPPER_DISABLE_BIT(0));
       STEPPER_DISABLE_PORT(1) |= (1 << STEPPER_DISABLE_BIT(1));
@@ -321,7 +321,7 @@ void st_go_idle()
     pin_state = true; // Override. Disable steppers.
   }
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { pin_state = !pin_state; } // Apply pin invert.
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if (pin_state) {
       STEPPER_DISABLE_PORT(0) |= (1 << STEPPER_DISABLE_BIT(0));
       STEPPER_DISABLE_PORT(1) |= (1 << STEPPER_DISABLE_BIT(1));
@@ -406,14 +406,14 @@ void st_go_idle()
 // with probing and homing cycles that require true real-time positions.
 ISR(TIMER1_COMPA_vect)
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     int i;
   #endif // Ramps Board
 
   if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
 
   // Set the direction pins a couple of nanoseconds before we step the steppers
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     DIRECTION_PORT(0) = (DIRECTION_PORT(0) & ~(1 << DIRECTION_BIT(0))) | st.dir_outbits[0];
     DIRECTION_PORT(1) = (DIRECTION_PORT(1) & ~(1 << DIRECTION_BIT(1))) | st.dir_outbits[1];
     DIRECTION_PORT(2) = (DIRECTION_PORT(2) & ~(1 << DIRECTION_BIT(2))) | st.dir_outbits[2];
@@ -431,7 +431,7 @@ ISR(TIMER1_COMPA_vect)
   #endif // Ramps Boafd
 
   // Then pulse the stepping pins
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     #ifdef STEP_PULSE_DELAY
       st.step_bits[0] = (STEP_PORT(0) & ~(1 << STEP_BIT(0))) | st.step_outbits[0]; // Store out_bits to prevent overwriting.
       st.step_bits[1] = (STEP_PORT(1) & ~(1 << STEP_BIT(1))) | st.step_outbits[1]; // Store out_bits to prevent overwriting.
@@ -508,7 +508,7 @@ ISR(TIMER1_COMPA_vect)
           st.counter_x = st.counter_y = st.counter_z = (st.exec_block->step_event_count >> 1);
         #endif
       }
-      #ifdef DEFAULTS_RAMPS_BOARD
+      #if defined(MULTIPORT_STEPPER_PINS)
         for (i = 0; i < N_AXIS; i++)
           st.dir_outbits[i] = st.exec_block->direction_bits[i] ^ dir_port_invert_mask[i];
       #else
@@ -549,7 +549,7 @@ ISR(TIMER1_COMPA_vect)
   if (sys_probe_state == PROBE_ACTIVE) { probe_state_monitor(); }
 
   // Reset step out bits.
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     for (i = 0; i < N_AXIS; i++)
       st.step_outbits[i] = 0;
   #else
@@ -562,28 +562,29 @@ ISR(TIMER1_COMPA_vect)
   #else
     st.counter_x += st.exec_block->steps[AXIS_1];
   #endif
-  #ifdef DEFAULTS_RAMPS_BOARD
+
     if (st.counter_x > st.exec_block->step_event_count) {
-      st.step_outbits[AXIS_1] |= (1<<STEP_BIT(AXIS_1));
+      #if defined(MULTIPORT_STEPPER_PINS)
+       st.step_outbits[AXIS_1] |= (1<<STEP_BIT(AXIS_1));
+      #else
+       st.step_outbits |= (1<<X_STEP_BIT);
+      #endif
       st.counter_x -= st.exec_block->step_event_count;
-      if (st.exec_block->direction_bits[AXIS_1] & (1<<DIRECTION_BIT(AXIS_1))) { sys_position[AXIS_1]--; }
+      #if defined(MULTIPORT_STEPPER_PINS)
+       if (st.exec_block->direction_bits[AXIS_1] & (1<<DIRECTION_BIT(AXIS_1))) { sys_position[AXIS_1]--; }
+      #else
+       if (st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) { sys_position[AXIS_1]--; }
+      #endif
       else { sys_position[AXIS_1]++; }
     }
-  #else
-    if (st.counter_x > st.exec_block->step_event_count) {
-      st.step_outbits |= (1<<X_STEP_BIT);
-      st.counter_x -= st.exec_block->step_event_count;
-      if (st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) { sys_position[AXIS_1]--; }
-      else { sys_position[AXIS_1]++; }
-    }
-  #endif // Ramps Board
+
 
   #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
     st.counter_y += st.steps[AXIS_2];
   #else
     st.counter_y += st.exec_block->steps[AXIS_2];
   #endif
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if (st.counter_y > st.exec_block->step_event_count) {
       st.step_outbits[AXIS_2] |= (1<<STEP_BIT(AXIS_2));
       st.counter_y -= st.exec_block->step_event_count;
@@ -603,7 +604,7 @@ ISR(TIMER1_COMPA_vect)
   #else
     st.counter_z += st.exec_block->steps[AXIS_3];
   #endif
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if (st.counter_z > st.exec_block->step_event_count) {
       st.step_outbits[AXIS_3] |= (1<<STEP_BIT(AXIS_3));
       st.counter_z -= st.exec_block->step_event_count;
@@ -624,7 +625,7 @@ ISR(TIMER1_COMPA_vect)
     #else
       st.counter_4 += st.exec_block->steps[AXIS_4];
     #endif
-    #ifdef DEFAULTS_RAMPS_BOARD
+    #if defined(MULTIPORT_STEPPER_PINS)
       if (st.counter_4 > st.exec_block->step_event_count) {
         st.step_outbits[AXIS_4] |= (1<<STEP_BIT(AXIS_4));
         st.counter_4 -= st.exec_block->step_event_count;
@@ -639,7 +640,7 @@ ISR(TIMER1_COMPA_vect)
     #else
       st.counter_5 += st.exec_block->steps[AXIS_5];
     #endif
-    #ifdef DEFAULTS_RAMPS_BOARD
+    #if defined(MULTIPORT_STEPPER_PINS)
       if (st.counter_5 > st.exec_block->step_event_count) {
         st.step_outbits[AXIS_5] |= (1<<STEP_BIT(AXIS_5));
         st.counter_5 -= st.exec_block->step_event_count;
@@ -654,7 +655,7 @@ ISR(TIMER1_COMPA_vect)
     #else
       st.counter_6 += st.exec_block->steps[AXIS_6];
     #endif
-    #ifdef DEFAULTS_RAMPS_BOARD
+    #if defined(MULTIPORT_STEPPER_PINS)
       if (st.counter_6 > st.exec_block->step_event_count) {
         st.step_outbits[AXIS_6] |= (1<<STEP_BIT(AXIS_6));
         st.counter_6 -= st.exec_block->step_event_count;
@@ -665,7 +666,7 @@ ISR(TIMER1_COMPA_vect)
   #endif // N_AXIS > 5
 
   // During a homing cycle, lock out and prevent desired axes from moving.
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     for (i = 0; i < N_AXIS; i++)
     if (sys.state == STATE_HOMING) { st.step_outbits[i] &= sys.homing_axis_lock[i]; }
   #else
@@ -677,7 +678,7 @@ ISR(TIMER1_COMPA_vect)
     st.exec_segment = NULL;
     if ( ++segment_buffer_tail == SEGMENT_BUFFER_SIZE) { segment_buffer_tail = 0; }
   }
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     for (i = 0; i < N_AXIS; i++)
       st.step_outbits[i] ^= step_port_invert_mask[i];  // Apply step port invert mask
   #else
@@ -701,7 +702,7 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER0_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     STEP_PORT(0) = (STEP_PORT(0) & ~(1 << STEP_BIT(0))) | step_port_invert_mask[0];
     STEP_PORT(1) = (STEP_PORT(1) & ~(1 << STEP_BIT(1))) | step_port_invert_mask[1];
     STEP_PORT(2) = (STEP_PORT(2) & ~(1 << STEP_BIT(2))) | step_port_invert_mask[2];
@@ -727,7 +728,7 @@ ISR(TIMER0_OVF_vect)
   // st_wake_up() routine.
   ISR(TIMER0_COMPA_vect)
   {
-    #ifdef DEFAULTS_RAMPS_BOARD
+    #if defined(MULTIPORT_STEPPER_PINS)
       STEP_PORT(0) = st.step_bits[0]; // Begin step pulse.
       STEP_PORT(1) = st.step_bits[1]; // Begin step pulse.
       STEP_PORT(2) = st.step_bits[2]; // Begin step pulse.
@@ -751,7 +752,7 @@ ISR(TIMER0_OVF_vect)
 void st_generate_step_dir_invert_masks()
 {
   uint8_t idx;
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     for (idx=0; idx<N_AXIS; idx++) {
       if (bit_istrue(settings.step_invert_mask,bit(idx))) { step_port_invert_mask[idx] = get_step_pin_mask(idx); }
       if (bit_istrue(settings.dir_invert_mask,bit(idx))) { dir_port_invert_mask[idx] = get_direction_pin_mask(idx); }
@@ -770,7 +771,7 @@ void st_generate_step_dir_invert_masks()
 // Reset and clear stepper subsystem variables
 void st_reset()
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     uint8_t idx;
   #endif // Ramps Board
 
@@ -788,7 +789,7 @@ void st_reset()
   busy = false;
 
   st_generate_step_dir_invert_masks();
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     for (idx=0; idx<N_AXIS; idx++) {
       st.dir_outbits[idx] = dir_port_invert_mask[idx]; // Initialize direction bits to default.
     }
@@ -827,7 +828,7 @@ void st_reset()
 void stepper_init()
 {
   // Configure step and direction interface pins
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     STEP_DDR(0) |= 1<<STEP_BIT(0);
     STEP_DDR(1) |= 1<<STEP_BIT(1);
     STEP_DDR(2) |= 1<<STEP_BIT(2);
@@ -910,7 +911,6 @@ static uint8_t st_next_block_index(uint8_t block_index)
   return(block_index);
 }
 
-
 #ifdef PARKING_ENABLE
   // Changes the run state of the step segment buffer to execute the special parking motion.
   void st_parking_setup_buffer()
@@ -927,7 +927,6 @@ static uint8_t st_next_block_index(uint8_t block_index)
     prep.recalculate_flag &= ~(PREP_FLAG_RECALCULATE);
     pl_block = NULL; // Always reset parking motion to reload new block.
   }
-
 
   // Restores the step segment buffer to the normal run state after a parking motion.
   void st_parking_restore_buffer()
@@ -997,7 +996,7 @@ void st_prep_buffer()
         // segment buffer finishes the prepped block, but the stepper ISR is still executing it.
         st_prep_block = &st_block_buffer[prep.st_block_index];
         uint8_t idx;
-        #ifdef DEFAULTS_RAMPS_BOARD
+        #if defined(MULTIPORT_STEPPER_PINS)
           for (idx=0; idx<N_AXIS; idx++) {
             st_prep_block->direction_bits[idx] = pl_block->direction_bits[idx];
           }

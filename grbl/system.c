@@ -24,6 +24,9 @@
 
 void system_init()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   CONTROL_DDR &= ~(CONTROL_MASK); // Configure as input pins
   #ifdef DISABLE_CONTROL_PIN_PULL_UP
     CONTROL_PORT &= ~(CONTROL_MASK); // Normal low operation. Requires external pull-down.
@@ -32,6 +35,7 @@ void system_init()
   #endif
   CONTROL_PCMSK |= CONTROL_MASK;  // Enable specific pins of the Pin Change Interrupt
   PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
+#endif // defined
 }
 
 
@@ -40,6 +44,9 @@ void system_init()
 // defined by the CONTROL_PIN_INDEX in the header file.
 uint8_t system_control_get_state()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return 0U;
+#else
   uint8_t control_state = 0;
   uint8_t pin = (CONTROL_PIN & CONTROL_MASK);
   #ifdef INVERT_CONTROL_PIN_MASK
@@ -52,8 +59,11 @@ uint8_t system_control_get_state()
     if (bit_isfalse(pin,(1<<CONTROL_CYCLE_START_BIT))) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
   }
   return(control_state);
+#endif
 }
 
+
+#if !defined(CNC_HOTWIRE_CUTTER)
 
 // Pin change interrupt for pin-out commands, i.e. cycle start, feed hold, and reset. Sets
 // only the realtime command execute variable to have the main program execute these when
@@ -61,6 +71,7 @@ uint8_t system_control_get_state()
 // directly from the incoming serial data stream.
 ISR(CONTROL_INT_vect)
 {
+
   uint8_t pin = system_control_get_state();
   if (pin) {
     if (bit_istrue(pin,CONTROL_PIN_INDEX_RESET)) {
@@ -73,13 +84,20 @@ ISR(CONTROL_INT_vect)
       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
     }
   }
+
 }
+
+#endif
 
 
 // Returns if safety door is ajar(T) or closed(F), based on pin state.
 uint8_t system_check_safety_door_ajar()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return false;
+#else
     return(system_control_get_state() & CONTROL_PIN_INDEX_SAFETY_DOOR);
+#endif
 }
 
 

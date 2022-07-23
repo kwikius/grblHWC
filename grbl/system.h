@@ -114,7 +114,6 @@
 #define SPINDLE_STOP_OVR_RESTORE        bit(2)
 #define SPINDLE_STOP_OVR_RESTORE_CYCLE  bit(3)
 
-
 // Define global system variables
 typedef struct {
   uint8_t state;               // Tracks the current system state of Grbl.
@@ -123,7 +122,7 @@ typedef struct {
   uint8_t soft_limit;          // Tracks soft limit errors for the state machine. (boolean)
   uint8_t step_control;        // Governs the step segment generator depending on system state.
   uint8_t probe_succeeded;     // Tracks if last probing cycle was successful.
-  #ifdef DEFAULTS_RAMPS_BOARD
+   #if defined MULTIPORT_STEPPER_PINS
     uint8_t homing_axis_lock[N_AXIS];    // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.
   #else
     uint8_t homing_axis_lock;    // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.

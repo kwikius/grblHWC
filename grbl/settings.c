@@ -44,7 +44,6 @@ void settings_store_build_info(char *line)
   memcpy_to_eeprom_with_checksum(EEPROM_ADDR_BUILD_INFO,(char*)line, LINE_BUFFER_SIZE);
 }
 
-
 // Method to store coord data parameters into EEPROM
 void settings_write_coord_data(uint8_t coord_select, float *coord_data)
 {
@@ -54,7 +53,6 @@ void settings_write_coord_data(uint8_t coord_select, float *coord_data)
   uint32_t addr = coord_select*(sizeof(float)*N_AXIS+1) + EEPROM_ADDR_PARAMETERS;
   memcpy_to_eeprom_with_checksum(addr,(char*)coord_data, sizeof(float)*N_AXIS);
 }
-
 
 // Method to store Grbl global settings struct and version number into EEPROM
 // NOTE: This function can only be called in IDLE state.
@@ -330,11 +328,10 @@ void settings_init() {
   }
 }
 
-
 // Returns step pin mask according to Grbl internal axis indexing.
 uint8_t get_step_pin_mask(uint8_t axis_idx)
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if ( axis_idx == AXIS_1 ) { return((1<<STEP_BIT(AXIS_1))); }
     if ( axis_idx == AXIS_2 ) { return((1<<STEP_BIT(AXIS_2))); }
     #if N_AXIS > 3
@@ -351,14 +348,14 @@ uint8_t get_step_pin_mask(uint8_t axis_idx)
     if ( axis_idx == AXIS_1 ) { return((1<<X_STEP_BIT)); }
     if ( axis_idx == AXIS_2 ) { return((1<<Y_STEP_BIT)); }
     return((1<<Z_STEP_BIT));
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif // MULTIPORT_STEPPER_PINS
 }
 
 
 // Returns direction pin mask according to Grbl internal axis indexing.
 uint8_t get_direction_pin_mask(uint8_t axis_idx)
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     if ( axis_idx == AXIS_1 ) { return((1<<DIRECTION_BIT(AXIS_1))); }
     if ( axis_idx == AXIS_2 ) { return((1<<DIRECTION_BIT(AXIS_2))); }
     #if N_AXIS > 3
@@ -375,13 +372,12 @@ uint8_t get_direction_pin_mask(uint8_t axis_idx)
     if ( axis_idx == AXIS_1 ) { return((1<<X_DIRECTION_BIT)); }
     if ( axis_idx == AXIS_2 ) { return((1<<Y_DIRECTION_BIT)); }
     return((1<<Z_DIRECTION_BIT));
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif // MULTIPORT_STEPPER_PINS
 }
-
 
 // Returns limit pin mask according to Grbl internal axis indexing.
 
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   uint8_t get_min_limit_pin_mask(uint8_t axis_idx)
   {
     if ( axis_idx == AXIS_1 ) { return((1<<MIN_LIMIT_BIT(AXIS_1))); }
@@ -420,5 +416,5 @@ uint8_t get_direction_pin_mask(uint8_t axis_idx)
     if ( axis_idx == AXIS_2 ) { return((1<<Y_LIMIT_BIT)); }
     return((1<<Z_LIMIT_BIT));
   }
-#endif //DEFAULTS_RAMPS_BOARD
+#endif //MULTIPORT_STEPPER_PINS
 

@@ -32,7 +32,7 @@
 
 void limits_init()
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     // Set as input pins
     MIN_LIMIT_DDR(0) &= ~(1<<MIN_LIMIT_BIT(0));
     MIN_LIMIT_DDR(1) &= ~(1<<MIN_LIMIT_BIT(1));
@@ -144,14 +144,14 @@ void limits_init()
       WDTCSR |= (1<<WDCE) | (1<<WDE);
       WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
     #endif
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif // MULTIPORT_STEPPER_PINS
 }
 
 
 // Disables hard limits.
 void limits_disable()
 {
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     #ifndef DISABLE_HW_LIMITS_INTERUPT
      LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
      PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
@@ -159,9 +159,9 @@ void limits_disable()
   #else
     LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
     PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif // MULTIPORT_STEPPER_PINS
 }
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   #if N_AXIS == 4
     static volatile uint8_t * const max_limit_pins[N_AXIS] = {&MAX_LIMIT_PIN(0), &MAX_LIMIT_PIN(1), &MAX_LIMIT_PIN(2), &MAX_LIMIT_PIN(3)};
     static volatile uint8_t * const min_limit_pins[N_AXIS] = {&MIN_LIMIT_PIN(0), &MIN_LIMIT_PIN(1), &MIN_LIMIT_PIN(2), &MIN_LIMIT_PIN(3)};
@@ -183,7 +183,7 @@ void limits_disable()
     static const uint8_t max_limit_bits[N_AXIS] = {MAX_LIMIT_BIT(0), MAX_LIMIT_BIT(1), MAX_LIMIT_BIT(2)};
     static const uint8_t min_limit_bits[N_AXIS] = {MIN_LIMIT_BIT(0), MIN_LIMIT_BIT(1), MIN_LIMIT_BIT(2)};
   #endif
-#endif // DEFAULTS_RAMPS_BOARD
+#endif //MULTIPORT_STEPPER_PINS
 
 // Returns limit state as a bit-wise uint8 variable. Each bit indicates an axis limit, where
 // triggered is 1 and not triggered is 0. Invert mask is applied. Axes are defined by their
@@ -191,7 +191,7 @@ void limits_disable()
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     uint8_t pin;
     uint8_t idx;
     #ifdef INVERT_LIMIT_PIN_MASK
@@ -232,10 +232,10 @@ uint8_t limits_get_state()
       }
     }
     return(limit_state);
-  #endif //DEFAULTS_RAMPS_BOARD
+  #endif //MULTIPORT_STEPPER_PINS
 }
 
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   #ifndef DISABLE_HW_LIMITS_INTERUPT
     #error "HW limits are not implemented"
   #endif
@@ -291,9 +291,9 @@ uint8_t limits_get_state()
       }
     }
   #endif
-#endif // DEFAULTS_RAMPS_BOARD
+#endif // MULTIPORT_STEPPER_PINS
 
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(MULTIPORT_STEPPER_PINS)
   static uint8_t axislock_active(uint8_t *axislock)
   {
     uint8_t res = 0;
@@ -307,7 +307,7 @@ uint8_t limits_get_state()
 
     return res;
   }
-#endif // DEFAULTS_RAMPS_BOARD
+#endif // MULTIPORT_STEPPER_PINS
 
 
 // Homes the specified cycle axes, sets the machine position, and performs a pull-off motion after
@@ -350,7 +350,7 @@ void limits_go_home(uint8_t cycle_mask)
   // Set search mode with approach at seek rate to quickly engage the specified cycle_mask limit switches.
   bool approach = true;
   float homing_rate = settings.homing_seek_rate;
-  #ifdef DEFAULTS_RAMPS_BOARD
+ #if defined(MULTIPORT_STEPPER_PINS)
     uint8_t limit_state, n_active_axis;
     uint8_t axislock[N_AXIS];
     do {
@@ -594,7 +594,7 @@ void limits_go_home(uint8_t cycle_mask)
         homing_rate = settings.homing_seek_rate;
       }
     } while (n_cycle-- > 0);
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif // MULTIPORT_STEPPER_PINS
 
   // The active cycle axes should now be homed and machine limits have been located. By
   // default, Grbl defines machine space as all negative, as do most CNCs. Since limit switches

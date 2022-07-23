@@ -44,7 +44,6 @@
 #define PL_COND_MOTION_MASK    (PL_COND_FLAG_RAPID_MOTION|PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE)
 #define PL_COND_ACCESSORY_MASK (PL_COND_FLAG_SPINDLE_CW|PL_COND_FLAG_SPINDLE_CCW|PL_COND_FLAG_COOLANT_FLOOD|PL_COND_FLAG_COOLANT_MIST)
 
-
 // This struct stores a linear movement of a g-code block motion with its critical "nominal" values
 // are as specified in the source g-code.
 typedef struct {
@@ -52,11 +51,11 @@ typedef struct {
   // NOTE: Used by stepper algorithm to execute the block correctly. Do not alter these values.
   uint32_t steps[N_AXIS];    // Step count along each axis
   uint32_t step_event_count; // The maximum step axis count and number of steps required to complete this block.
-  #ifdef DEFAULTS_RAMPS_BOARD
+  #if defined(MULTIPORT_STEPPER_PINS)
     uint8_t direction_bits[N_AXIS];    // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
   #else
     uint8_t direction_bits;    // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
-  #endif // DEFAULTS_RAMPS_BOARD
+  #endif
   // Block condition data to ensure correct execution depending on states and overrides.
   uint8_t condition;      // Block bitflag variable defining block run conditions. Copied from pl_line_data.
   int32_t line_number;  // Block line number for real-time reporting. Copied from pl_line_data.
@@ -137,6 +136,5 @@ uint8_t plan_get_block_buffer_count();
 uint8_t plan_check_full_buffer();
 
 void plan_get_planner_mpos(float *target);
-
 
 #endif

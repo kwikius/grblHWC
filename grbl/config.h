@@ -31,7 +31,6 @@
 #define config_h
 #include "grbl.h" // For Arduino IDE compatibility.
 
-
 // Define CPU pin map and default settings.
 // NOTE: OEMs can avoid the need to maintain/update the defaults.h and cpu_map.h files and use only
 // one configuration file by placing their specific defaults and pin map at the bottom of this file.
@@ -40,22 +39,28 @@
 //#define CPU_MAP_2560_INITIAL
 
 // To use with RAMPS 1.4 Board, comment out the above defines and uncomment the next two defines
-#define DEFAULTS_RAMPS_BOARD
-#define CPU_MAP_2560_RAMPS_BOARD
+//#define DEFAULTS_RAMPS_BOARD
+//#define CPU_MAP_2560_RAMPS_BOARD
+
+#define CNC_HOTWIRE_CUTTER
+
+#define DEFAULTS_MIGHTYBOARD
+#define CPU_MAP_1280_MIGHTYBOARD
 
 // Serial baud rate
 // #define BAUD_RATE 230400
 #define BAUD_RATE 115200
 
 // Axis array index values. Must start with 0 and be continuous.
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(DEFAULTS_RAMPS_BOARD) || defined(DEFAULTS_MIGHTYBOARD)
+#define MULTIPORT_STEPPER_PINS
   // 4, 5 & 6 axis support only for RAMPS 1.4 (for the moment :-)...)
   //#define N_AXIS 5            // Number of axes
   //#define N_AXIS_LINEAR 3     // Number of linears axis
   #define N_AXIS  4          // Number of axes KH
   #define N_AXIS_LINEAR 4     // Number of linears axis KH
 #else
-  #define N_AXIS 3 // Number of axes = 3 if not DEFAULTS_RAMPS_BOARD
+  #define N_AXIS 3 // Number of axes = 3
 #endif
 
 #define AXIS_1 0        // Axis indexing value. Must start with 0 and be continuous.
@@ -171,7 +176,7 @@
 // on separate pin, but homed in one cycle. Also, it should be noted that the function of hard limits
 // will not be affected by pin sharing.
 // NOTE: Defaults are set for a traditional 3-axis CNC machine. Z-axis first to clear, followed by X & Y.
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined( DEFAULTS_RAMPS_BOARD ) || defined(DEFAULTS_MIGHTYBOARD)
   #if N_AXIS == 4 // 4 axis : homing
     #define HOMING_CYCLE_0 (1<<AXIS_3) // Home Z axis first to clear workspace.
     #define HOMING_CYCLE_1 (1<<AXIS_4) // Home 4th axis (A)
@@ -199,7 +204,7 @@
   #define HOMING_CYCLE_0 (1<<AXIS_3)                // REQUIRED: First move Z to clear workspace.
   #define HOMING_CYCLE_1 ((1<<AXIS_1)|(1<<AXIS_2))  // OPTIONAL: Then move X,Y at the same time.
   // #define HOMING_CYCLE_2                         // OPTIONAL: Uncomment and add axes mask to enable
-#endif // DEFAULTS_RAMPS_BOARD
+#endif // DEFAULTS_RAMPS_BOARD || DEFAULTS_MIGHTYBOARD
 
 // NOTE: The following are two examples to setup homing for 2-axis machines.
 // #define HOMING_CYCLE_0 ((1<<AXIS_1)|(1<<AXIS_2))  // NOT COMPATIBLE WITH COREXY: Homes both X-Y in one cycle.
@@ -288,7 +293,7 @@
 // normally-open(NO) and normally-closed(NC) switches installed on their machine.
 // NOTE: PLEASE DO NOT USE THIS, unless you have a situation that needs it.
 // #define INVERT_LIMIT_PIN_MASK ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)) // Default disabled. Uncomment to enable.
-#ifdef DEFAULTS_RAMPS_BOARD
+#if defined(DEFAULTS_RAMPS_BOARD) || defined (DEFAULTS_MIGHTYBOARD)
   // Only enable the following line if you have - (min) limit switches attached
   //#define INVERT_MIN_LIMIT_PIN_MASK ((1<<AXIS_1) | (1<<AXIS_2) | (1<<AXIS_3))
   // Only enable the following line if you have + (max) limit switches attached

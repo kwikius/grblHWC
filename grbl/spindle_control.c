@@ -21,12 +21,15 @@
 
 #include "grbl.h"
 
-
+#if !defined(CNC_HOTWIRE_CUTTER)
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.
-
+#endif
 
 void spindle_init()
-{    
+{
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   // Configure variable spindle PWM and enable pin, if required.
   SPINDLE_PWM_DDR |= (1<<SPINDLE_PWM_BIT); // Configure as PWM output pin.
   SPINDLE_TCCRA_REGISTER = SPINDLE_TCCRA_INIT_MASK; // Configure PWM output compare timer
@@ -37,11 +40,15 @@ void spindle_init()
 
   pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
   spindle_stop();
+#endif
 }
 
 
 uint8_t spindle_get_state()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return (SPINDLE_STATE_DISABLE);
+#else
   #ifdef INVERT_SPINDLE_ENABLE_PIN
     if (bit_isfalse(SPINDLE_ENABLE_PORT,(1<<SPINDLE_ENABLE_BIT)) && (SPINDLE_TCCRA_REGISTER & (1<<SPINDLE_COMB_BIT))) {
   #else
@@ -51,6 +58,7 @@ uint8_t spindle_get_state()
     else { return(SPINDLE_STATE_CW); }
   }
 	return(SPINDLE_STATE_DISABLE);
+#endif
 }
 
 
@@ -59,12 +67,16 @@ uint8_t spindle_get_state()
 // Called by spindle_init(), spindle_set_speed(), spindle_set_state(), and mc_reset().
 void spindle_stop()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+ return;
+#else
   SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // Disable PWM. Output voltage is zero.
   #ifdef INVERT_SPINDLE_ENABLE_PIN
     SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);  // Set pin to high
   #else
     SPINDLE_ENABLE_PORT &= ~(1<<SPINDLE_ENABLE_BIT); // Set pin to low
   #endif
+#endif
 }
 
 
@@ -72,6 +84,9 @@ void spindle_stop()
 // and stepper ISR. Keep routine small and efficient.
 void spindle_set_speed(uint16_t pwm_value)
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+ return;
+#else
   SPINDLE_OCR_REGISTER = pwm_value; // Set PWM output level.
   #ifdef SPINDLE_ENABLE_OFF_WITH_ZERO_SPEED
     if (pwm_value == SPINDLE_PWM_OFF_VALUE) {
@@ -91,6 +106,7 @@ void spindle_set_speed(uint16_t pwm_value)
       SPINDLE_TCCRA_REGISTER |= (1<<SPINDLE_COMB_BIT); // Ensure PWM output is enabled.
     }
   #endif
+#endif
 }
 
 
@@ -99,6 +115,9 @@ void spindle_set_speed(uint16_t pwm_value)
   // Called by spindle_set_state() and step segment generator. Keep routine small and efficient.
   uint16_t spindle_compute_pwm_value(float rpm) // 328p PWM register is 8-bit.
   {
+#if defined(CNC_HOTWIRE_CUTTER)
+    return 0U;
+#else
     uint16_t pwm_value;
     rpm *= (0.010*sys.spindle_speed_ovr); // Scale by spindle speed override value.
     // Calculate PWM register value based on rpm max/min settings and programmed rpm.
@@ -117,17 +136,17 @@ void spindle_set_speed(uint16_t pwm_value)
       #if (N_PIECES > 3)
         if (rpm > RPM_POINT34) {
           pwm_value = floor(RPM_LINE_A4*rpm - RPM_LINE_B4);
-        } else 
+        } else
       #endif
       #if (N_PIECES > 2)
         if (rpm > RPM_POINT23) {
           pwm_value = floor(RPM_LINE_A3*rpm - RPM_LINE_B3);
-        } else 
+        } else
       #endif
       #if (N_PIECES > 1)
         if (rpm > RPM_POINT12) {
           pwm_value = floor(RPM_LINE_A2*rpm - RPM_LINE_B2);
-        } else 
+        } else
       #endif
       {
         pwm_value = floor(RPM_LINE_A1*rpm - RPM_LINE_B1);
@@ -135,13 +154,17 @@ void spindle_set_speed(uint16_t pwm_value)
     }
     sys.spindle_speed = rpm;
     return(pwm_value);
+#endif // defined(CNC_HOTWIRE_CUTTER
   }
 
-#else 
+#else
 
   // Called by spindle_set_state() and step segment generator. Keep routine small and efficient.
   uint16_t spindle_compute_pwm_value(float rpm) // Mega2560 PWM register is 16-bit.
   {
+#if defined(CNC_HOTWIRE_CUTTER)
+    return 0U;
+#else
 	uint16_t pwm_value;
 	rpm *= (0.010*sys.spindle_speed_ovr); // Scale by spindle speed override value.
 	// Calculate PWM register value based on rpm max/min settings and programmed rpm.
@@ -157,30 +180,34 @@ void spindle_set_speed(uint16_t pwm_value)
 		sys.spindle_speed = settings.rpm_min;
 		pwm_value = SPINDLE_PWM_MIN_VALUE;
 	  }
-	} else { 
+	} else {
 	  // Compute intermediate PWM value with linear spindle speed model.
 	  // NOTE: A nonlinear model could be installed here, if required, but keep it VERY light-weight.
 	  sys.spindle_speed = rpm;
 	  pwm_value = floor((rpm-settings.rpm_min)*pwm_gradient) + SPINDLE_PWM_MIN_VALUE;
 	}
 	return(pwm_value);
+#endif
   }
 
-#endif  
+#endif
 
 // Immediately sets spindle running state with direction and spindle rpm via PWM, if enabled.
 // Called by g-code parser spindle_sync(), parking retract and restore, g-code program end,
 // sleep, and spindle stop override.
 void spindle_set_state(uint8_t state, float rpm)
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+    return ;
+#else
   if (sys.abort) { return; } // Block during abort.
   if (state == SPINDLE_DISABLE) { // Halt or set spindle direction and rpm.
-  
+
     sys.spindle_speed = 0.0;
     spindle_stop();
-  
+
   } else {
-  
+
     if (state == SPINDLE_ENABLE_CW) {
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
     } else {
@@ -188,7 +215,7 @@ void spindle_set_state(uint8_t state, float rpm)
     }
 
     // NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
-    if (settings.flags & BITFLAG_LASER_MODE) { 
+    if (settings.flags & BITFLAG_LASER_MODE) {
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: May need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
     }
     spindle_set_speed(spindle_compute_pwm_value(rpm));
@@ -198,20 +225,25 @@ void spindle_set_state(uint8_t state, float rpm)
         SPINDLE_ENABLE_PORT &= ~(1<<SPINDLE_ENABLE_BIT);
       #else
         SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);
-      #endif   
+      #endif
     #endif
-  
+
   }
-  
   sys.report_ovr_counter = 0; // Set to report change immediately
+  #endif
 }
 
 
-// G-code parser entry-point for setting spindle state. Forces a planner buffer sync and bails 
+// G-code parser entry-point for setting spindle state. Forces a planner buffer sync and bails
 // if an abort or check-mode is active.
 void spindle_sync(uint8_t state, float rpm)
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+    return ;
+#else
+
   if (sys.state == STATE_CHECK_MODE) { return; }
   protocol_buffer_synchronize(); // Empty planner buffer to ensure spindle is set when programmed.
   spindle_set_state(state,rpm);
+#endif
 }

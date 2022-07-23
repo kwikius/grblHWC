@@ -1,0 +1,8 @@
+
+
+Modify parts where
+
+#define DEFAULTS_RAMPS_BOARD
+#define CPU_MAP_2560_RAMPS_BOARD
+
+

@@ -28,6 +28,9 @@ uint8_t probe_invert_mask;
 // Probe pin initialization routine.
 void probe_init()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   PROBE_DDR &= ~(PROBE_MASK); // Configure as input pins
   #ifdef DISABLE_PROBE_PIN_PULL_UP
     PROBE_PORT &= ~(PROBE_MASK); // Normal low operation. Requires external pull-down.
@@ -35,6 +38,7 @@ void probe_init()
     PROBE_PORT |= PROBE_MASK;    // Enable internal pull-up resistors. Normal high operation.
   #endif
   probe_configure_invert_mask(false); // Initialize invert mask.
+#endif
 }
 
 
@@ -43,14 +47,24 @@ void probe_init()
 // and the probing cycle modes for toward-workpiece/away-from-workpiece.
 void probe_configure_invert_mask(uint8_t is_probe_away)
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return;
+#else
   probe_invert_mask = 0; // Initialize as zero.
   if (bit_isfalse(settings.flags,BITFLAG_INVERT_PROBE_PIN)) { probe_invert_mask ^= PROBE_MASK; }
   if (is_probe_away) { probe_invert_mask ^= PROBE_MASK; }
+#endif
 }
 
 
 // Returns the probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
-uint8_t probe_get_state() { return((PROBE_PIN & PROBE_MASK) ^ probe_invert_mask); }
+uint8_t probe_get_state() {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return false;
+#else
+  return((PROBE_PIN & PROBE_MASK) ^ probe_invert_mask);
+#endif
+}
 
 
 // Monitors probe pin state and records the system position when detected. Called by the
@@ -58,9 +72,13 @@ uint8_t probe_get_state() { return((PROBE_PIN & PROBE_MASK) ^ probe_invert_mask)
 // NOTE: This function must be extremely efficient as to not bog down the stepper ISR.
 void probe_state_monitor()
 {
+#if defined(CNC_HOTWIRE_CUTTER)
+   return ;
+#else
   if (probe_get_state()) {
     sys_probe_state = PROBE_OFF;
     memcpy(sys_probe_position, sys_position, sizeof(sys_position));
     bit_true(sys_rt_exec_state, EXEC_MOTION_CANCEL);
   }
+#endif
 }
