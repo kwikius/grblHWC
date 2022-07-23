@@ -1,0 +1,7 @@
+*.hex
+*.zip
+*.o
+*.elf
+*.DS_Store
+*.d
+
