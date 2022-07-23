@@ -1,0 +1,1 @@
+/usr/share/arduino/hardware/tools/avrdude -C/usr/share/arduino/hardware/tools/avrdude.conf -v -v -v -v -patmega1280 -carduino -P/dev/ttyACM0 -b57600 -D -Uflash:w:/tmp/build14500198712837375959.tmp/sketch_jul23a.cpp.hex:i 
