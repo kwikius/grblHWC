@@ -11,6 +11,11 @@
   #error MightyBoard only has 5 axes
   #endif
 
+//------- common scl for adjusting  I2c pots
+// works with individual Stepper current sda pins
+  #define POTS_SCL_PORT J
+  #define POTS_SCL_PIN 5
+
 // define stepper pins
 ///---- x axis index 0
   #define DIRECTION_PORT_0 F
@@ -91,12 +96,11 @@
 
   #endif
 
-
   #if N_AXIS > 4
 ///--- B axis
 
     #define DIRECTION_PORT_4 A
-    #define DIRECTION_BIT_4 6 // B axis direction
+    #define DIRECTION_BIT_4 6 // B axis direction PA6
 
     #define STEP_PORT_4 A
     #define STEP_BIT_4 7 // B axis step PA7
@@ -162,6 +166,7 @@
   #define PROBE_BIT       7  // MEGA2560 Analog Pin 15
   #define PROBE_MASK      (1<<PROBE_BIT)
 #endif
+
   #define SPINDLE_PWM_OFF_VALUE     0
 
 #if 0

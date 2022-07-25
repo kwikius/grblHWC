@@ -1,1 +1,13 @@
 /usr/share/arduino/hardware/tools/avrdude -C/usr/share/arduino/hardware/tools/avrdude.conf -v -v -v -v -patmega1280 -carduino -P/dev/ttyACM0 -b57600 -D -Uflash:w:/tmp/build14500198712837375959.tmp/sketch_jul23a.cpp.hex:i 
+
+ARDUINO_PATH ?= /usr/share/arduino
+UPLOAD_PORT ?= /dev/ttyACM0
+AVRDUDE = $(ARDUINO_PATH)/hardware/tools/avrdude
+AVRDUDE_CONF = $((ARDUINO_PATH)/hardware/tools/avrdude.conf
+AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -patmega1280 -carduino
+
+upload:
+
+   $(AVRDUDE) $(AVRDUDE_PARAMS) -P$(UPLOAD_PORT) -b57600 -D -U flash:w:grbl.hex:i
+
+

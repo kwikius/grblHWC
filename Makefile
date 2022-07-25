@@ -23,33 +23,35 @@
 # CLOCK ........ Target AVR clock rate in Hertz
 # OBJECTS ...... The object files created from your source files. This list is
 #                usually the same as the list of source files with suffix ".o".
-# PROGRAMMER ... Options to avrdude which define the hardware you use for
-#                uploading to the AVR and the interface where this hardware
-#                is connected.
-# FUSES ........ Parameters for avrdude to flash the fuses appropriately.
+#
+
+# use arduino options for uploading to Mightyboard
+ARDUINO_PATH ?= /usr/share/arduino
+UPLOAD_PORT ?= /dev/ttyACM0
+AVRDUDE = $(ARDUINO_PATH)/hardware/tools/avrdude
+AVRDUDE_CONF = $(ARDUINO_PATH)/hardware/tools/avrdude.conf
+AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -patmega1280 -carduino
 
 DEVICE     ?= atmega1280
 CLOCK      = 16000000L
-###PROGRAMMER ?= -c avrisp2 -P usb
-PROGRAMMER ?= -D -v -c avrisp2 -P /dev/ttyUSB0
+
 SOURCE    = main.c motion_control.c gcode.c spindle_control.c coolant_control.c serial.c \
              protocol.c stepper.c eeprom.c settings.c planner.c nuts_bolts.c limits.c \
              print.c probe.c report.c system.c sleep.c jog.c
 BUILDDIR = build
 SOURCEDIR = grbl
 # FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0x24:m
-FUSES      = -U hfuse:w:0xd2:m -U lfuse:w:0xff:m
+#FUSES      = -U hfuse:w:0xd2:m -U lfuse:w:0xff:m
 
 # Tune the lines below only if you know what you are doing:
 
-AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -B 10 -F
+#AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -B 10 -F
 
 # Compile flags for avr-gcc v4.8.1. Does not produce -flto warnings.
 # COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -I. -ffunction-sections
 
 # Compile flags for avr-gcc v4.9.2 compatible with the IDE. Or if you don't care about the warnings.
 COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -I. -ffunction-sections -flto
-
 
 OBJECTS = $(addprefix $(BUILDDIR)/,$(notdir $(SOURCE:.c=.o)))
 
@@ -69,11 +71,13 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c
 #.c.s:
 	$(COMPILE) -S $< -o $(BUILDDIR)/$@
 
-flash:	all
-	$(AVRDUDE) -U flash:w:grbl.hex:i
+#flash:	all
+#	$(AVRDUDE) -U flash:w:grbl.hex:i
 
-fuse:
-	$(AVRDUDE) $(FUSES)
+flash: all
+	$(AVRDUDE) $(AVRDUDE_PARAMS) -P$(UPLOAD_PORT) -b57600 -D -U flash:w:grbl.hex:i
+#fuse:
+#	$(AVRDUDE) $(FUSES)
 
 # Xcode uses the Makefile targets "", "clean" and "install"
 install: flash fuse
