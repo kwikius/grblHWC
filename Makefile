@@ -16,23 +16,19 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 
+# Makefile for grbl on Mightyboard
+# MightyBoard is basically just a Arduino Mega1280
 
-# This is a prototype Makefile. Modify it according to your needs.
-# You should at least check the settings for
-# DEVICE ....... The AVR device you compile for
-# CLOCK ........ Target AVR clock rate in Hertz
-# OBJECTS ...... The object files created from your source files. This list is
-#                usually the same as the list of source files with suffix ".o".
-#
+# name of hex file
+TARGET = grbl_MightyBoard_HotWire.hex
 
-# use arduino options for uploading to Mightyboard
+# use arduino Mega1280 options for uploading
 ARDUINO_PATH ?= /usr/share/arduino
 UPLOAD_PORT ?= /dev/ttyACM0
 AVRDUDE = $(ARDUINO_PATH)/hardware/tools/avrdude
 AVRDUDE_CONF = $(ARDUINO_PATH)/hardware/tools/avrdude.conf
-AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -patmega1280 -carduino
-
-DEVICE     ?= atmega1280
+DEVICE     = atmega1280
+AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -p$(DEVICE) -carduino
 CLOCK      = 16000000L
 
 SOURCE    = main.c motion_control.c gcode.c spindle_control.c coolant_control.c serial.c \
@@ -40,23 +36,14 @@ SOURCE    = main.c motion_control.c gcode.c spindle_control.c coolant_control.c 
              print.c probe.c report.c system.c sleep.c jog.c
 BUILDDIR = build
 SOURCEDIR = grbl
-# FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0x24:m
-#FUSES      = -U hfuse:w:0xd2:m -U lfuse:w:0xff:m
 
-# Tune the lines below only if you know what you are doing:
-
-#AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -B 10 -F
-
-# Compile flags for avr-gcc v4.8.1. Does not produce -flto warnings.
-# COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -I. -ffunction-sections
-
-# Compile flags for avr-gcc v4.9.2 compatible with the IDE. Or if you don't care about the warnings.
+# Compile flags for avr-gcc .
 COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -I. -ffunction-sections -flto
 
 OBJECTS = $(addprefix $(BUILDDIR)/,$(notdir $(SOURCE:.c=.o)))
 
 # symbolic targets:
-all:	grbl.hex
+all:	$(TARGET)
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c
 	$(COMPILE) -MMD -MP -c $< -o $@
@@ -71,20 +58,8 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c
 #.c.s:
 	$(COMPILE) -S $< -o $(BUILDDIR)/$@
 
-#flash:	all
-#	$(AVRDUDE) -U flash:w:grbl.hex:i
-
 flash: all
-	$(AVRDUDE) $(AVRDUDE_PARAMS) -P$(UPLOAD_PORT) -b57600 -D -U flash:w:grbl.hex:i
-#fuse:
-#	$(AVRDUDE) $(FUSES)
-
-# Xcode uses the Makefile targets "", "clean" and "install"
-install: flash fuse
-
-# if you use a bootloader, change the command below appropriately:
-load: all
-	bootloadHID grbl.hex
+	$(AVRDUDE) $(AVRDUDE_PARAMS) -P$(UPLOAD_PORT) -b57600 -D -U flash:w:$(TARGET):i
 
 clean:
 	rm -f grbl.hex $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(BUILDDIR)/*.elf
@@ -93,9 +68,9 @@ clean:
 $(BUILDDIR)/main.elf: $(OBJECTS)
 	$(COMPILE) -o $(BUILDDIR)/main.elf $(OBJECTS) -lm -Wl,--gc-sections
 
-grbl.hex: $(BUILDDIR)/main.elf
-	rm -f grbl.hex
-	avr-objcopy -j .text -j .data -O ihex $(BUILDDIR)/main.elf grbl.hex
+$(TARGET): $(BUILDDIR)/main.elf
+	rm -f $(TARGET)
+	avr-objcopy -j .text -j .data -O ihex $(BUILDDIR)/main.elf $(TARGET)
 	avr-size --format=berkeley $(BUILDDIR)/main.elf
 # If you have an EEPROM section, you must also create a hex file for the
 # EEPROM and add it to the "flash" target.

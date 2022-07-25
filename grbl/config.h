@@ -44,6 +44,7 @@
 
 #define CNC_HOTWIRE_CUTTER
 
+// for use with Mightyboard 3d printer board
 #define DEFAULTS_MIGHTYBOARD
 #define CPU_MAP_1280_MIGHTYBOARD
 
@@ -52,11 +53,12 @@
 #define BAUD_RATE 115200
 
 // Axis array index values. Must start with 0 and be continuous.
+
 #if defined(DEFAULTS_RAMPS_BOARD) || defined(DEFAULTS_MIGHTYBOARD)
+// In the original Atmeag328 the pins for a function needed to be on the same port in many cases.
+// define MULTIPORT_STEPPER_PINS to allow the various stepper pins to be on various ports on Atmega2560/1280
 #define MULTIPORT_STEPPER_PINS
-  // 4, 5 & 6 axis support only for RAMPS 1.4 (for the moment :-)...)
-  //#define N_AXIS 5            // Number of axes
-  //#define N_AXIS_LINEAR 3     // Number of linears axis
+  // 4, 5 & 6 axis support
   #define N_AXIS  4          // Number of axes KH
   #define N_AXIS_LINEAR 4     // Number of linears axis KH
 #else

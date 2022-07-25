@@ -1,0 +1,45 @@
+
+
+X 
+  dir  PF0
+  step PF1
+  dis  PF2
+  current PF3
+  minlim  PL0
+  maxlim  PL1
+  
+y 
+   dir   PF4
+   step   PF5
+   dis    PF6
+   current PF7
+   minlim PL2
+   maxlim PL3
+   
+ z  
+   dir   PK0
+   step  PK1
+   dis   PK2
+   current PK3
+   minlim PL6
+   maxlim PL7
+   
+ a
+   dir PA2
+   step PA3
+   dis  PA4
+   current PA5
+   minlim PC0
+   maxlim PC1
+   
+ b  
+   dir  PA6
+   step PA7
+   dis  PG2
+   current PJ6
+   minlim PG0
+   maxlim PG1
+   
+   
+   
+   

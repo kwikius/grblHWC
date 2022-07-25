@@ -7,6 +7,18 @@
   #define SERIAL_RX USART0_RX_vect
   #define SERIAL_UDRE USART0_UDRE_vect
 
+  // input if high then EX1_PWR and EX2_PWR are disabled
+  #define SAFETY_CUTOFF_SR_CHECK_PORT  G
+  #define SAFETY_CUTOFF_SR_CHECK_PIN  4  // PG4
+  // input/output keep low, make high output to reset
+  #define SAFETY_CUTOFF_RESET_PORT  H
+  #define SAFETY_CUTOFF_RESET_PIN  1  // PH1
+  // input/output
+  // input to identify failure condition
+  // output to test failure conditon
+  #define SAFETY_CUTOFF_TEST_PORT H
+  #define SAFETY_CUTOFF_TEST_PIN 0
+
   #if N_AXIS > 5
   #error MightyBoard only has 5 axes
   #endif
