@@ -20,7 +20,7 @@
 # MightyBoard is basically just a Arduino Mega1280
 
 # name of hex file
-TARGET = grbl_MightyBoard_HotWire.hex
+TARGET = grblHWC.hex
 # system avrdude
 AVRDUDE = avrdude
 # use local avrdude.conf file with minimal definitions
@@ -66,7 +66,7 @@ else
 endif
 
 clean:
-	rm -f grbl.hex $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(BUILDDIR)/*.elf
+	rm -f $(TARGET) $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(BUILDDIR)/*.elf
 
 # file targets:
 $(BUILDDIR)/main.elf: $(OBJECTS)

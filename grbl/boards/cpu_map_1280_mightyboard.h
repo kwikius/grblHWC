@@ -1,5 +1,5 @@
-#ifndef CPU_MAP_RAMPS2560_H_INCLUDED
-#define CPU_MAP_RAMPS2560_H_INCLUDED
+#ifndef CPU_MAP_1280_MIGHTYBOARD_H_INCLUDED
+#define CPU_MAP_1280_MIGHTYBOARD_H_INCLUDED
 
 #include "stepper_utils.h"
 
@@ -87,9 +87,9 @@
   #define MAX_LIMIT_BIT_2 7 // Z Limit Max - PL7
 
   #if N_AXIS > 3
-///--- a axis
+///--- U axis
     #define DIRECTION_PORT_3 A
-    #define DIRECTION_BIT_3 2// A Axis direction PA2
+    #define DIRECTION_BIT_3 2// U Axis direction PA2
 
     #define STEP_PORT_3 A
     #define STEP_BIT_3 3 // A axis step PA3
@@ -210,4 +210,4 @@
 
 #endif
 
-#endif // CPU_MAP_RAMPS2560_H_INCLUDED
+#endif // CPU_MAP_1280_MIGHTYBOARD_H_INCLUDED

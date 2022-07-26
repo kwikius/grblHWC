@@ -179,7 +179,6 @@ uint8_t system_execute_line(char *line);
 // Execute the startup script lines stored in EEPROM upon initialization
 void system_execute_startup(char *line);
 
-
 void system_flag_wco_change();
 
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
@@ -206,6 +205,5 @@ void system_set_exec_motion_override_flag(uint8_t mask);
 void system_set_exec_accessory_override_flag(uint8_t mask);
 void system_clear_exec_motion_overrides();
 void system_clear_exec_accessory_overrides();
-
 
 #endif
