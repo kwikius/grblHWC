@@ -21,15 +21,15 @@
 
 # name of hex file
 TARGET = grbl_MightyBoard_HotWire.hex
-
-# use arduino Mega1280 options for uploading
-ARDUINO_PATH ?= /usr/share/arduino
+# system avrdude
+AVRDUDE = avrdude
+# use local avrdude.conf file with minimal definitions
+AVRDUDE_CONF = ./avrdude.conf
+# atmega8U2 on Mightyboard used as a usb serial converter
 UPLOAD_PORT ?= /dev/ttyACM0
-AVRDUDE = $(ARDUINO_PATH)/hardware/tools/avrdude
-AVRDUDE_CONF = $(ARDUINO_PATH)/hardware/tools/avrdude.conf
 DEVICE     = atmega1280
-AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -p$(DEVICE) -carduino
 CLOCK      = 16000000L
+AVRDUDE_PARAMS = -C$(AVRDUDE_CONF) -v -v -v -v -p$(DEVICE) -carduino
 
 SOURCE    = main.c motion_control.c gcode.c spindle_control.c coolant_control.c serial.c \
              protocol.c stepper.c eeprom.c settings.c planner.c nuts_bolts.c limits.c \
@@ -59,7 +59,11 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c
 	$(COMPILE) -S $< -o $(BUILDDIR)/$@
 
 flash: all
+ifneq (, $(shell which $(AVRDUDE)))
 	$(AVRDUDE) $(AVRDUDE_PARAMS) -P$(UPLOAD_PORT) -b57600 -D -U flash:w:$(TARGET):i
+else
+	$(error "Need to install avrdude (and optionally provide path in the AVRDUDE Makefile variable)")
+endif
 
 clean:
 	rm -f grbl.hex $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(BUILDDIR)/*.elf
